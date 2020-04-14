@@ -4,16 +4,24 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - $(customer)/*
+
+variables:
+- group: customer-pipelines-variables
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
+- script: echo $(customer)
   displayName: 'Run a one-line script'
 
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
+    echo Deploy to $(cluster-name)
+    echo Static $(static)
   displayName: 'Run a multi-line script'
