@@ -8,10 +8,7 @@ jobs:
     vmImage: 'ubuntu-latest'
   timeoutInMinutes: 30
   steps:
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: |
+  - bash: |
         $files=$(git diff HEAD HEAD~ --name-only)
         echo $files
 
@@ -42,7 +39,7 @@ jobs:
   dependsOn: changed_customers
   condition: eq(dependencies.changed_customers.outputs['changed.development'], 'true')
   steps:
-  - script: echo Development changed
+  - bash: echo Development changed
 
 - job: customern
   displayName: CustomernCustomer
@@ -52,4 +49,4 @@ jobs:
   dependsOn: changed_customers
   condition: eq(dependencies.changed_customers.outputs['changed.customern'], 'true')
   steps:
-  - script: echo Customern changed
+  - bash: echo Customern changed
