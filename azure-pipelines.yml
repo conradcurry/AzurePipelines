@@ -19,11 +19,11 @@ jobs:
           echo Checking $customer
           if [[ "$customer" == "development/" ]]
           then
-            echo "##vso[task.setvariable variable=development]True"
+            echo "##vso[task.setvariable variable=development;isOutput=true]True"
           fi
           if [[ "$customer" == "customern/" ]]
           then
-            echo "##vso[task.setvariable variable=customern]True"
+            echo "##vso[task.setvariable variable=customern;isOutput=true]True"
           fi
         done
     name: changed
