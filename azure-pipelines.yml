@@ -8,27 +8,21 @@ jobs:
     vmImage: 'ubuntu-latest'
   timeoutInMinutes: 30
   steps:
+  - checkout: self
   - bash: |
-        $files=$(git diff HEAD HEAD~ --name-only)
-        echo $files
+        changes=$(git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g')
+        echo $changes
 
-        $temp=$files -split ' '
-        $count=$temp.Length
-        echo "Total changed $count files"
-
-        For ($i=0; $i -lt $temp.Length; $i++)
-        {
-          $name=$temp[$i]
-          echo "this is $name file"
-          if ($name -like "development/*")
-            {
-              Write-Host "##vso[task.setvariable variable=development]True"
-            }
-          if ($name -like "customern/*")
-            {
-              Write-Host "##vso[task.setvariable variable=customern]True"
-            }
-        }
+        for customer in $changes
+        do
+          echo Checking $customer
+          if [[$customer == "development/"]]
+            echo "##vso[task.setvariable variable=development]True"
+          fi
+          if [[$customer == "customern/"]]
+            echo "##vso[task.setvariable variable=customern]True"
+          fi
+        done
     name: changed
 
 - job: development
