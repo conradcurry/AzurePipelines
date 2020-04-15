@@ -18,11 +18,11 @@ stages:
           for customer in $changes
           do
             echo Checking $customer
-            if [[$customer == "development/"]]
+            if [[ "$customer" == "development/" ]]
             then
               echo "##vso[task.setvariable variable=development]True"
             fi
-            if [[$customer == "customern/"]]
+            if [[ "$customer" == "customern/" ]]
             then
               echo "##vso[task.setvariable variable=customern]True"
             fi
