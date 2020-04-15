@@ -1,48 +1,64 @@
 trigger:
 - master
 
-jobs:
-- job: changed_customers
-  displayName: FindChangedCustomers
+stages:
+- stage: ReadRepo
   pool:
     vmImage: 'ubuntu-latest'
-  timeoutInMinutes: 30
-  steps:
-  - checkout: self
-  - bash: |
-        changes=$(git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g')
-        echo $changes
+  jobs:
+  - job: changed_customers
+    displayName: FindChangedCustomers
+    timeoutInMinutes: 30
+    steps:
+    - checkout: self
+    - bash: |
+          changes=$(git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g')
+          echo $changes
 
-        for customer in $changes
-        do
-          echo Checking $customer
-          if [[$customer == "development/"]]
-          then
-            echo "##vso[task.setvariable variable=development]True"
-          fi
-          if [[$customer == "customern/"]]
-          then
-            echo "##vso[task.setvariable variable=customern]True"
-          fi
-        done
-    name: changed
+          for customer in $changes
+          do
+            echo Checking $customer
+            if [[$customer == "development/"]]
+            then
+              echo "##vso[task.setvariable variable=development]True"
+            fi
+            if [[$customer == "customern/"]]
+            then
+              echo "##vso[task.setvariable variable=customern]True"
+            fi
+          done
+      name: changed
+      workingDirectory: $(Pipeline.Workspace)
 
-- job: development
-  displayName: DevelopmentCustomer
-  pool:
-    vmImage: 'ubuntu-latest'
-  timeoutInMinutes: 30
-  dependsOn: changed_customers
-  condition: eq(dependencies.changed_customers.outputs['changed.development'], 'true')
-  steps:
-  - bash: echo Development changed
+- stage: Deploy
+  dependsOn: ReadRepo
+  jobs:
+  - deployment: development
+    displayName: DevelopmentCustomer
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 30
+    condition: eq(dependencies.changed_customers.outputs['changed.development'], 'true')
+    environment:
+      name: 'development-mural'
+      resourceType: kubernetes
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - bash: echo Development changed
 
-- job: customern
-  displayName: CustomernCustomer
-  pool:
-    vmImage: 'ubuntu-latest'
-  timeoutInMinutes: 30
-  dependsOn: changed_customers
-  condition: eq(dependencies.changed_customers.outputs['changed.customern'], 'true')
-  steps:
-  - bash: echo Customern changed
+  - deployment: customern
+    displayName: CustomerNCustomer
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 30
+    condition: eq(dependencies.changed_customers.outputs['changed.customern'], 'true')
+    environment:
+      name: 'customern-mural'
+      resourceType: kubernetes
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - bash: echo CustomerN changed
