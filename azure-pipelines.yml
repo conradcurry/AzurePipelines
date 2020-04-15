@@ -28,7 +28,7 @@ stages:
             fi
           done
       name: changed
-      workingDirectory: $(Pipeline.Workspace)
+      workingDirectory: $(Build.Repository.LocalPath)
 
 - stage: Deploy
   dependsOn: ReadRepo
