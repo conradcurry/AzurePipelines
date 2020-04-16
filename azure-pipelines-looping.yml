@@ -1,0 +1,27 @@
+trigger:
+- master
+
+stages:
+- stage: Deploy
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: changed_customers
+    displayName: FindChangedCustomers
+    timeoutInMinutes: 5
+    steps:
+    - checkout: self
+    - bash: |
+          customers=$(git diff --dirstat=files,0 HEAD~1 | sed 's/^[ 0-9.]\+% //g')
+          echo $customers
+          echo "##vso[task.setvariable variable=customers]$customers"
+      name: changed
+      workingDirectory: $(Build.Repository.LocalPath)
+
+  - job: loop_deployments
+    displayName: DeployChangedCustomers
+    dependsOn: changed_customers
+    steps:
+    - template: azure-pipelines.looped-tmpl.yaml
+      parameters:
+        customers: $[ dependencies.changed_customers.outputs['changed.$customers'] ]
