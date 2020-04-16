@@ -22,6 +22,6 @@ stages:
     displayName: DeployChangedCustomers
     dependsOn: changed_customers
     steps:
-    - template: azure-pipelines.looped-tmpl.yaml
+    - template: deploycustomer-template.yml
       parameters:
         customers: $[ dependencies.changed_customers.outputs['changed.$customers'] ]

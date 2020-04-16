@@ -1,0 +1,22 @@
+parameters:
+- customers: []
+
+jobs:
+- job: DeployEachCustomer
+  displayName: DeployEachCustomer
+  steps:
+  - ${{ each c in parameters.customers }}:
+    dependsOn: ReadRepo
+    - deployment: ${{ c }}
+      displayName: ${{ c }}Deployment
+      pool:
+        vmImage: 'ubuntu-latest'
+      timeoutInMinutes: 15
+      environment:
+        name: '${{ c }}-mural'
+        resourceType: kubernetes
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - bash: echo ${{ c }} changed
