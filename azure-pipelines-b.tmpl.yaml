@@ -1,0 +1,45 @@
+parameters:
+- name: parameter1
+  default: ''
+- name: parameter2
+  default: ''
+- name: loopvariable
+  default: []
+
+stages:
+- stage: LoopStage
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: PrepEach
+    steps:
+      - ${{ each i in parameters.loopvariable }}:
+        - bash: echo "##vso[task.setvariable variable=prepvariable;isOutput=true]prepvalue"
+          name: prepvarstep
+        - bash: echo $(prepvarstep.prepvalue)
+          name: printvalue
+        - bash: echo ${{ i }}
+          name: iterationvalue
+
+  - deployment: DeployEach
+    displayName: DeployEachDisplayName
+    dependsOn: PrepEach
+    environment: '${{ i }}-env'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - ${{ each i in parameters.loopvariable }}:
+              - bash: echo ${{ i }} changed
+
+  - deployment: SecondaryDeployEach
+    displayName: SecondaryDeployEach
+    dependsOn: DeployEach
+    environment:
+      name: '${{ i }}-env'
+      resourceType: Kubernetes
+    strategy:
+      rolling:
+        deploy:
+          steps:
+            - bash: echo ${{ i }} changed

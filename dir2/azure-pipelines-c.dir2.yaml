@@ -1,0 +1,31 @@
+parameters:
+- name: parameter1
+  default: ''
+- name: parameter2
+  default: 'dir2'
+
+stages:
+- stage: DirStage
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: PrepJob
+    steps:
+      - bash: echo "##vso[task.setvariable variable=prepvariable;isOutput=true]prepvalue"
+        name: prepvarstep
+      - bash: echo $(prepvarstep.prepvalue)
+        name: printvalue
+
+  - deployment: DeployDir2
+    displayName: DeployDir2
+    dependsOn: PrepJob
+    environment:
+      name: '$(parameter2)-env'
+      resourceType: Kubernetes
+    strategy:
+      rolling:
+        deploy:
+          steps:
+            - bash: |
+                echo Dir2 deployed
+                echo $[ dependencies.PrepJob.outputs['prepvarstep.prepvariable'] ]

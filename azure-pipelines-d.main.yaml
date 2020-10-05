@@ -1,0 +1,71 @@
+trigger:
+- master
+
+variables:
+- name: variable1
+  value: "firstvariable"
+- name: loopvariable
+  value: ["one", "two"]
+
+stages:
+- stage: FirstStage
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: FirstStageFirstJob
+    displayName: FirstStageFirstJob
+    timeoutInMinutes: 5
+    steps:
+    - bash: echo $(variable1)
+    - bash: |
+        echo Create boolean
+        echo "##vso[task.setvariable variable=outputvariable;isOutput=true]True"
+      name: outputstep
+    - bash: |
+        echo New variable
+        echo "##vso[task.setvariable variable=variable2;isOutput=true]secondvariable"
+      name: firststagevariable
+
+  - job: FirstStageSecondJob
+    displayName: FirstStageSecondJob
+    dependsOn: FirstStageFirstJob
+    condition: eq(dependencies.FirstStageFirstJob.outputs['outputstep.outputvariable'], 'true')
+    timeoutInMinutes: 10
+    steps:
+    - bash: echo $[ dependencies.FirstStageFirstJob.outputs['firststagevariable.variable2'] ]
+
+- stage: DirStage
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: PrepJob
+    steps:
+      - bash: echo "##vso[task.setvariable variable=prepvariable;isOutput=true]prepvalue"
+        name: prepvarstep
+      - bash: echo $(prepvarstep.prepvalue)
+        name: printvalue
+
+  - deployment: DeployDir1
+    displayName: DeployDir1
+    dependsOn: PrepJob
+    environment:
+      name: '$(parameter2)-env'
+      resourceType: Kubernetes
+    strategy:
+      rolling:
+        deploy:
+          steps:
+            - bash: |
+                echo Dir1 deployed
+                echo $[ dependencies.PrepJob.outputs['prepvarstep.prepvariable'] ]
+
+
+- stage: FinalStage
+  pool:
+    vmImage: 'ubuntu-latest'
+  jobs:
+  - job: FinalStageFirstJob
+    displayName: FinalStageFirstJob
+    timeoutIntMinutes: 5
+    steps:
+    - bash: echo Cleaning pipeline
